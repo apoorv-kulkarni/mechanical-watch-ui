@@ -7,17 +7,66 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="watch-container">
-        <div class="watch">
-            <div class="indices"></div>
-            <div class="hand hour" id="hour-hand"></div>
-            <div class="hand minute" id="minute-hand"></div>
-            <div class="hand second" id="second-hand"></div>
-            <div class="center"></div>
-            <div class="numerals"></div>
+
+    <div class="date-info" id="date">-- --- ----</div>
+
+    <div class="toggle-container">
+        <span class="toggle-label">Analog</span>
+        <div class="toggle-switch" id="viewToggle">
+            <div class="toggle-slider"></div>
         </div>
-        <div class="datetime" id="datetime"></div>
+        <span class="toggle-label">Digital</span>
     </div>
+
+    <div class="night-mode-container">
+        <span class="toggle-label">Night Mode</span>
+        <div class="toggle-switch" id="nightModeToggle">
+            <div class="toggle-slider"></div>
+        </div>
+    </div>
+
+    <div class="beep-mute-container">
+        <span class="toggle-label">Mute Beep</span>
+        <div class="toggle-switch" id="beepMuteToggle">
+            <div class="toggle-slider"></div>
+        </div>
+    </div>
+
+    <div class="sync-container">
+        <button class="sync-button" id="syncButton">Sync Time</button>
+        <span class="sync-status" id="syncStatus"></span>
+    </div>
+
+    <!-- Digital View -->
+    <div class="digital-view" id="digitalView">
+        <span class="time" id="clock">00:00</span><span class="seconds" id="secs">00</span>
+        <div class="analog-info">
+            <div class="analog-date-detail" id="digitalDate">Monday, 01 Jan 2024</div>
+            <div class="analog-timezone" id="digitalTimezone">UTC+0</div>
+        </div>
+    </div>
+
+    <!-- Analog View -->
+    <div class="analog-view active" id="analogView">
+        <div class="watch">
+            <div class="indices" id="indices"></div>
+            <div class="numerals" id="numerals"></div>
+            <div class="hand hour-hand" id="hourHand"></div>
+            <div class="hand minute-hand" id="minuteHand"></div>
+            <div class="hand second-hand" id="secondHand"></div>
+            <div class="center-dot"></div>
+        </div>
+        <div class="analog-info">
+            <div class="analog-digital-time" id="analogTime">00:00:00</div>
+            <div class="analog-date-detail" id="analogDate">Monday, 01 Jan 2024</div>
+            <div class="analog-timezone" id="analogTimezone">UTC+0</div>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

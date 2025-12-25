@@ -1,13 +1,208 @@
 body {
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease;
 }
 
-.watch-container {
+body.night-mode {
+    background-color: #0a0000;
+}
+
+body.night-mode .watch {
+    background: radial-gradient(circle at 30% 30%, #1a0000, #050000);
+}
+
+body.night-mode .indice,
+body.night-mode .numeral,
+body.night-mode .hour-hand,
+body.night-mode .minute-hand {
+    opacity: 0.3;
+}
+
+body.night-mode .second-hand {
+    opacity: 0.5;
+}
+
+body.night-mode .time,
+body.night-mode .analog-digital-time {
+    color: #ff0000;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+body.night-mode .date-info,
+body.night-mode .analog-date-detail,
+body.night-mode .analog-timezone,
+body.night-mode .toggle-label {
+    opacity: 0.15;
+}
+
+/* Dark mode toggle colors - darker green and red tints */
+body.night-mode .toggle-switch {
+    background-color: #1a0000; /* Very dark red when off in night mode */
+}
+
+body.night-mode .toggle-switch.active {
+    background-color: #1a3d1f; /* Dark forest green when active in night mode */
+}
+
+body.night-mode .toggle-slider {
+    background-color: #660000; /* Dim red slider in night mode */
+}
+
+body.night-mode .toggle-switch.active .toggle-slider {
+    background-color: #2d5a2d; /* Dim green slider when active in night mode */
+}
+
+/* Toggle Switch */
+.toggle-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+.night-mode-container {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+.beep-mute-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+.sync-container {
+    position: fixed;
+    top: 140px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    z-index: 100;
+}
+
+.sync-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: background-color 0.3s;
+}
+
+.sync-button:hover {
+    background-color: #555;
+}
+
+.sync-button:active {
+    background-color: #222;
+}
+
+.sync-status {
+    font-size: 10px;
+    opacity: 0.5;
+    letter-spacing: 0.1em;
+}
+
+.toggle-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background-color: #333;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.toggle-switch.active {
+    background-color: #34C759; /* Apple green when active */
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.active .toggle-slider {
+    transform: translateX(24px);
+}
+
+/* Digital Clock Styles */
+.digital-view {
+    display: none;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.digital-view.active {
+    display: block;
+}
+
+.digital-view .analog-info {
+    margin-top: 30px;
+}
+
+.time {
+    font-size: 15vw;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.seconds {
+    font-size: 8vw;
+    font-weight: 300;
+    opacity: 0.6;
+    margin-left: 10px;
+}
+
+/* Analog Clock Styles */
+.analog-view {
+    display: none;
+}
+
+.analog-view.active {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15,11 +210,15 @@ body {
 
 .watch {
     position: relative;
-    width: 300px;
-    height: 300px;
-    border: 10px solid #333;
+    width: min(80vw, 80vh, 400px);
+    height: min(80vw, 80vh, 400px);
+    border: 8px solid #333;
     border-radius: 50%;
-    background-color: #ffbe98;
+    background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
+    box-shadow: 
+        0 0 0 2px #111,
+        inset 0 0 30px rgba(0,0,0,0.5),
+        0 10px 40px rgba(0,0,0,0.8);
 }
 
 .indices {
@@ -29,82 +228,148 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    pointer-events: none;
 }
 
 .indice, .beat {
     position: absolute;
-    width: 2px;
-    height: 10px;
-    background-color: #333;
+    background-color: #ddd;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
 }
 
 .indice {
-    height: 25px;
-}
-
-.hand {
-    position: absolute;
-    bottom: 50%;
-    left: 50%;
-    transform-origin: bottom;
-    transform: translateX(-50%);
-}
-
-.hour {
-    width: 5px;
-    height: 80px;
-    background-color: #333;
-    z-index: 3;
-}
-
-.minute {
-    width: 4px;
-    height: 110px;
-    background-color: #555;
-    z-index: 2;
-}
-
-.second {
-    width: 2px;
-    height: 130px;
-    background-color: red;
-    z-index: 1;
-}
-
-.center {
-    position: absolute;
     width: 3px;
-    height: 3px;
-    background-color: #333;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    height: 12%;
+    background: linear-gradient(to bottom, #fff, #999);
 }
 
-.datetime {
-    margin-top: 20px;
-    font-size: 1.2em;
-    font-family: Arial, sans-serif;
-    color: #333;
+.beat {
+    width: 2px;
+    height: 6%;
+    background-color: #666;
 }
 
 .numerals {
     position: absolute;
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    pointer-events: none;
 }
 
 .numeral {
     position: absolute;
-    font-size: 1em;
-    color: #333;
+    font-size: clamp(18px, 4vw, 28px);
+    color: #fff;
+    font-weight: 600;
     text-align: center;
-    width: 20px;
-    height: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.hour-hand {
+    width: 6px;
+    height: 25%;
+    background: linear-gradient(to top, #fff, #ccc);
+    z-index: 3;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+.minute-hand {
+    width: 4px;
+    height: 35%;
+    background: linear-gradient(to top, #fff, #aaa);
+    z-index: 2;
+    box-shadow: 0 0 6px rgba(0,0,0,0.5);
+}
+
+.second-hand {
+    width: 2px;
+    height: 40%;
+    background: #ff3333;
+    z-index: 4;
+    box-shadow: 0 0 4px rgba(255,0,0,0.5);
+}
+
+.center-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle, #fff, #999);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    box-shadow: 0 0 6px rgba(0,0,0,0.8);
+}
+
+/* Analog info display below watch */
+.analog-info {
+    margin-top: 30px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.analog-digital-time {
+    font-size: clamp(24px, 6vw, 48px);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.analog-date-detail {
+    font-size: clamp(12px, 2.5vw, 16px);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.analog-timezone {
+    font-size: clamp(10px, 2vw, 14px);
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    opacity: 0.5;
+    margin-top: 5px;
+}
+
+/* Date display for both views */
+.date-info {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    opacity: 0.3;
+}
+
+/* Progress bar */
+.progress-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #111;
+}
+
+.progress-bar {
+    height: 100%;
+    background: #fff;
+    width: 0%;
+    transition: width 0.1s linear;
 }
