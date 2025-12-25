@@ -44,9 +44,36 @@ function initializeAnalogWatch() {
 // Create beep sound using Web Audio API
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let beepMuted = false;
+let audioContextUnlocked = false;
+
+// Unlock audio context on iOS (required for iOS Safari/Chrome)
+async function unlockAudioContext() {
+    if (audioContextUnlocked) return;
+    
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+    
+    // Play a silent sound to fully unlock on iOS
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    gainNode.gain.value = 0;
+    oscillator.start(0);
+    oscillator.stop(0.001);
+    
+    audioContextUnlocked = true;
+    console.log('Audio context unlocked');
+}
 
 function beep() {
     if (beepMuted) return; // Don't beep if muted
+    
+    // Ensure audio context is running
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
     
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -155,6 +182,7 @@ const digitalView = document.getElementById('digitalView');
 const analogView = document.getElementById('analogView');
 
 viewToggle.addEventListener('click', () => {
+    unlockAudioContext(); // Unlock audio on user interaction
     viewToggle.classList.toggle('active');
     digitalView.classList.toggle('active');
     analogView.classList.toggle('active');
@@ -163,6 +191,7 @@ viewToggle.addEventListener('click', () => {
 // Night mode toggle
 const nightModeToggle = document.getElementById('nightModeToggle');
 nightModeToggle.addEventListener('click', () => {
+    unlockAudioContext(); // Unlock audio on user interaction
     nightModeToggle.classList.toggle('active');
     document.body.classList.toggle('night-mode');
 });
@@ -170,13 +199,21 @@ nightModeToggle.addEventListener('click', () => {
 // Beep mute toggle
 const beepMuteToggle = document.getElementById('beepMuteToggle');
 beepMuteToggle.addEventListener('click', () => {
+    unlockAudioContext(); // Unlock audio on user interaction
     beepMuteToggle.classList.toggle('active');
     beepMuted = !beepMuted;
 });
 
 // Sync button
 const syncButton = document.getElementById('syncButton');
-syncButton.addEventListener('click', syncTime);
+syncButton.addEventListener('click', () => {
+    unlockAudioContext(); // Unlock audio on user interaction
+    syncTime();
+});
+
+// Also unlock on any touch/click event (for iOS)
+document.body.addEventListener('touchstart', unlockAudioContext, { once: true });
+document.body.addEventListener('click', unlockAudioContext, { once: true });
 
 // Update clock
 function update() {
