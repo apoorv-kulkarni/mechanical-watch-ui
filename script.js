@@ -79,12 +79,8 @@ async function syncTime() {
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     
     // List of time APIs to try in order (all support CORS)
+    // Cloudflare first as it's fastest and most reliable
     const timeAPIs = [
-        {
-            name: 'TimeAPI',
-            url: `https://timeapi.io/api/time/current/zone?timeZone=${encodeURIComponent(userTimezone)}`,
-            parse: (data) => new Date(data.dateTime).getTime()
-        },
         {
             name: 'Cloudflare',
             url: 'https://cloudflare.com/cdn-cgi/trace',
@@ -96,14 +92,29 @@ async function syncTime() {
                 }
                 throw new Error('No timestamp in response');
             },
-            isText: true
+            isText: true,
+            timeout: 5000
+        },
+        {
+            name: 'TimeAPI',
+            url: `https://timeapi.io/api/time/current/zone?timeZone=${encodeURIComponent(userTimezone)}`,
+            parse: (data) => new Date(data.dateTime).getTime(),
+            isText: false,
+            timeout: 5000
         }
     ];
     
     for (const api of timeAPIs) {
         try {
             const before = performance.now();
-            const response = await fetch(api.url);
+            
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), api.timeout);
+            
+            const response = await fetch(api.url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
             const after = performance.now();
             
             if (!response.ok) {
@@ -125,7 +136,7 @@ async function syncTime() {
             
             return; // Success - exit function
         } catch (error) {
-            console.warn(`${api.name} sync failed:`, error);
+            console.warn(`${api.name} sync failed:`, error.name === 'AbortError' ? 'timeout' : error);
             // Continue to next API
         }
     }
