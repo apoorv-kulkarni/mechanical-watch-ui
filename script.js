@@ -308,11 +308,6 @@ function update() {
     document.getElementById('clock').textContent = h + ":" + m;
     document.getElementById('secs').textContent = s;
     
-    // Update date
-    document.getElementById('date').textContent = now.toLocaleDateString('en-GB', { 
-        day: '2-digit', month: 'short', year: 'numeric' 
-    });
-
     // Update analog info display
     const displayHours = now.getHours() % 12 || 12; // Convert to 12-hour format
     const ampm = now.getHours() >= 12 ? 'PM' : 'AM';

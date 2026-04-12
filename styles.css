@@ -40,7 +40,6 @@ body.night-mode .analog-digital-time {
     text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
 }
 
-body.night-mode .date-info,
 body.night-mode .analog-date-detail,
 body.night-mode .analog-timezone,
 body.night-mode .toggle-label {
@@ -118,10 +117,6 @@ body.night-mode .toggle-switch.active .toggle-slider {
         font-size: 9px;
     }
 
-    /* date-info overlaps the bar on mobile — hide it (date is shown below the watch) */
-    .date-info {
-        display: none;
-    }
 }
 
 @media (max-width: 560px) {
@@ -372,16 +367,6 @@ body.night-mode .toggle-switch.active .toggle-slider {
     margin-top: 5px;
 }
 
-/* Date display for both views */
-.date-info {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    opacity: 0.3;
-}
 
 /* Complications Bar */
 .complications-bar {
