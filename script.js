@@ -42,11 +42,16 @@ function initializeAnalogWatch() {
 }
 
 // Create beep sound using Web Audio API
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext = null;
+try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+} catch (e) {
+    console.warn('Web Audio API not supported:', e);
+}
 let beepMuted = false;
 
 function beep() {
-    if (beepMuted) return; // Don't beep if muted
+    if (beepMuted || !audioContext) return;
 
     const play = () => {
         const oscillator = audioContext.createOscillator();
@@ -149,29 +154,27 @@ function leapCycleSVG(position) {
 }
 
 // Cache to avoid repainting complications every animation frame
-let lastComplicationDay = -1;
+let lastComplicationDay = null;
 
 function updateComplications(date) {
-    const day = date.getDate() + date.getMonth() * 31 + date.getFullYear() * 12 * 31;
+    const day = date.toDateString();
     if (day === lastComplicationDay) return;
     lastComplicationDay = day;
 
     // Moon
     const phase = getMoonPhase(date);
-    document.getElementById('moonDisplay').innerHTML = moonPhaseSVG(phase);
+    els.moonDisplay.innerHTML = moonPhaseSVG(phase);
 
     // Leap year
     const year = date.getFullYear();
     const leap = isLeapYear(year);
-    const leapVal = document.getElementById('leapYearValue');
-    const leapLbl = document.getElementById('leapYearLabel');
-    leapVal.textContent = year;
-    leapLbl.textContent = leap ? 'LEAP' : 'ANNUAL';
-    leapVal.classList.toggle('is-leap', leap);
-    leapLbl.classList.toggle('is-leap', leap);
+    els.leapYearValue.textContent = year;
+    els.leapYearLabel.textContent = leap ? 'LEAP' : 'ANNUAL';
+    els.leapYearValue.classList.toggle('is-leap', leap);
+    els.leapYearLabel.classList.toggle('is-leap', leap);
 
     // Cycle scale
-    document.getElementById('leapCycleDisplay').innerHTML = leapCycleSVG(leapCyclePosition(year));
+    els.leapCycleDisplay.innerHTML = leapCycleSVG(leapCyclePosition(year));
 }
 
 // Track last second to detect when it resets
@@ -182,8 +185,7 @@ let timeOffset = 0;
 
 // Sync time with multiple reliable time sources
 async function syncTime() {
-    const syncStatus = document.getElementById('syncStatus');
-    syncStatus.textContent = 'Syncing...';
+    els.syncStatus.textContent = 'Syncing...';
     
     // Detect browser's timezone
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -237,11 +239,11 @@ async function syncTime() {
             const localTime = Date.now();
             
             timeOffset = serverTime - localTime + latency;
-            
-            syncStatus.textContent = `Offset: ${timeOffset > 0 ? '+' : ''}${timeOffset.toFixed(0)}ms (${api.name})`;
-            
+
+            els.syncStatus.textContent = `Offset: ${timeOffset > 0 ? '+' : ''}${timeOffset.toFixed(0)}ms (${api.name})`;
+
             setTimeout(() => {
-                syncStatus.textContent = '';
+                els.syncStatus.textContent = '';
             }, 5000);
             
             return; // Success - exit function
@@ -252,41 +254,82 @@ async function syncTime() {
     }
     
     // All APIs failed
-    syncStatus.textContent = 'Sync failed - all sources unavailable';
+    els.syncStatus.textContent = 'Sync failed - all sources unavailable';
     console.error('All time sync sources failed');
     setTimeout(() => {
-        syncStatus.textContent = '';
+        els.syncStatus.textContent = '';
     }, 3000);
 }
 
-// Toggle between views
-const viewToggle = document.getElementById('viewToggle');
-const digitalView = document.getElementById('digitalView');
-const analogView = document.getElementById('analogView');
+// Cached DOM element lookups so the update loop doesn't query every frame
+const els = {
+    clock: document.getElementById('clock'),
+    secs: document.getElementById('secs'),
+    centis: document.getElementById('centis'),
+    ampm: document.getElementById('ampm'),
+    analogTime: document.getElementById('analogTime'),
+    analogDate: document.getElementById('analogDate'),
+    analogTimezone: document.getElementById('analogTimezone'),
+    digitalDate: document.getElementById('digitalDate'),
+    digitalTimezone: document.getElementById('digitalTimezone'),
+    secondHand: document.getElementById('secondHand'),
+    minuteHand: document.getElementById('minuteHand'),
+    hourHand: document.getElementById('hourHand'),
+    progress: document.getElementById('progress'),
+    moonDisplay: document.getElementById('moonDisplay'),
+    leapYearValue: document.getElementById('leapYearValue'),
+    leapYearLabel: document.getElementById('leapYearLabel'),
+    leapCycleDisplay: document.getElementById('leapCycleDisplay'),
+    syncStatus: document.getElementById('syncStatus'),
+    viewToggle: document.getElementById('viewToggle'),
+    digitalView: document.getElementById('digitalView'),
+    analogView: document.getElementById('analogView'),
+    nightModeToggle: document.getElementById('nightModeToggle'),
+    beepMuteToggle: document.getElementById('beepMuteToggle'),
+    syncButton: document.getElementById('syncButton'),
+};
 
-viewToggle.addEventListener('click', () => {
-    viewToggle.classList.toggle('active');
-    digitalView.classList.toggle('active');
-    analogView.classList.toggle('active');
+// Restore persisted UI state before wiring toggles
+function applyStoredState() {
+    if (localStorage.getItem('nightMode') === 'true') {
+        els.nightModeToggle.classList.add('active');
+        document.body.classList.add('night-mode');
+    }
+    if (localStorage.getItem('beepMuted') === 'true') {
+        beepMuted = true;
+        els.beepMuteToggle.classList.add('active');
+    }
+    if (localStorage.getItem('digitalView') === 'true') {
+        els.viewToggle.classList.add('active');
+        els.digitalView.classList.add('active');
+        els.analogView.classList.remove('active');
+    }
+}
+
+// Toggle between views
+els.viewToggle.addEventListener('click', () => {
+    els.viewToggle.classList.toggle('active');
+    els.digitalView.classList.toggle('active');
+    els.analogView.classList.toggle('active');
+    localStorage.setItem('digitalView', els.digitalView.classList.contains('active'));
 });
 
 // Night mode toggle
-const nightModeToggle = document.getElementById('nightModeToggle');
-nightModeToggle.addEventListener('click', () => {
-    nightModeToggle.classList.toggle('active');
+els.nightModeToggle.addEventListener('click', () => {
+    els.nightModeToggle.classList.toggle('active');
     document.body.classList.toggle('night-mode');
+    localStorage.setItem('nightMode', document.body.classList.contains('night-mode'));
 });
 
 // Beep mute toggle
-const beepMuteToggle = document.getElementById('beepMuteToggle');
-beepMuteToggle.addEventListener('click', () => {
-    beepMuteToggle.classList.toggle('active');
+els.beepMuteToggle.addEventListener('click', () => {
+    els.beepMuteToggle.classList.toggle('active');
     beepMuted = !beepMuted;
+    localStorage.setItem('beepMuted', beepMuted);
 });
 
 // Sync button
-const syncButton = document.getElementById('syncButton');
-syncButton.addEventListener('click', syncTime);
+els.syncButton.addEventListener('click', syncTime);
 
 // Update clock
 function update() {
@@ -304,23 +347,24 @@ function update() {
     }
     lastSecond = currentSecond;
 
+    const period = now.getHours() >= 12 ? 'PM' : 'AM';
+
     // Update digital clock
-    document.getElementById('clock').textContent = h + ":" + m;
-    document.getElementById('secs').textContent = s;
-    
+    els.clock.textContent = h + ":" + m;
+    els.secs.textContent = s;
+    const cs = String(Math.floor(ms / 10)).padStart(2, '0');
+    els.centis.textContent = "." + cs;
+    els.ampm.textContent = period;
+
     // Update analog info display
     const displayHours = now.getHours() % 12 || 12; // Convert to 12-hour format
-    const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-    document.getElementById('analogTime').textContent = `${displayHours}:${m}:${s} ${ampm}`;
-    document.getElementById('analogDate').textContent = now.toLocaleDateString('en-US', { 
+    els.analogTime.textContent = `${displayHours}:${m}:${s}.${cs} ${period}`;
+    const dateStr = now.toLocaleDateString('en-US', {
         weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
     });
-    
-    // Update digital view info display (same format as analog)
-    document.getElementById('digitalDate').textContent = now.toLocaleDateString('en-US', { 
-        weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-    });
-    
+    els.analogDate.textContent = dateStr;
+    els.digitalDate.textContent = dateStr;
+
     // Get timezone
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const offset = -now.getTimezoneOffset();
@@ -329,21 +373,21 @@ function update() {
     const offsetSign = offset >= 0 ? '+' : '-';
     const offsetString = `UTC${offsetSign}${offsetHours}${offsetMinutes > 0 ? ':' + String(offsetMinutes).padStart(2, '0') : ''}`;
     const timezoneDisplay = `${timezone} (${offsetString})`;
-    document.getElementById('analogTimezone').textContent = timezoneDisplay;
-    document.getElementById('digitalTimezone').textContent = timezoneDisplay;
+    els.analogTimezone.textContent = timezoneDisplay;
+    els.digitalTimezone.textContent = timezoneDisplay;
 
     // Update analog clock hands
     const seconds = now.getSeconds() + ms / 1000;
     const minutes = now.getMinutes() + seconds / 60;
     const hours = now.getHours() % 12 + minutes / 60;
 
-    document.getElementById('secondHand').style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
-    document.getElementById('minuteHand').style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
-    document.getElementById('hourHand').style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
+    els.secondHand.style.transform = `translateX(-50%) rotate(${seconds * 6}deg)`;
+    els.minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
+    els.hourHand.style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
 
     // Update progress bar
     const progress = ((now.getSeconds() + ms / 1000) / 60) * 100;
-    document.getElementById('progress').style.width = progress + "%";
+    els.progress.style.width = progress + "%";
 
     // Update complications (moon phase + leap year) — throttled to once per day
     updateComplications(now);
@@ -352,5 +396,6 @@ function update() {
 }
 
 // Initialize
+applyStoredState();
 initializeAnalogWatch();
 requestAnimationFrame(update);

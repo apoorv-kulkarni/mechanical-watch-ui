@@ -92,6 +92,10 @@ body.night-mode .toggle-switch.active .toggle-slider {
 }
 
 @media (max-width: 560px) {
+    body {
+        padding-top: 70px;
+    }
+
     .controls-bar {
         flex-direction: row;
         flex-wrap: wrap;
@@ -115,13 +119,6 @@ body.night-mode .toggle-switch.active .toggle-slider {
 
     .sync-status {
         font-size: 9px;
-    }
-
-}
-
-@media (max-width: 560px) {
-    body {
-        padding-top: 70px;
     }
 }
 
@@ -216,6 +213,23 @@ body.night-mode .toggle-switch.active .toggle-slider {
     font-weight: 300;
     opacity: 0.6;
     margin-left: 10px;
+}
+
+.centis {
+    font-size: 4vw;
+    font-weight: 300;
+    opacity: 0.4;
+    margin-left: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ampm {
+    font-size: 3vw;
+    font-weight: 400;
+    opacity: 0.5;
+    margin-left: 8px;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
 }
 
 /* Analog Clock Styles */
