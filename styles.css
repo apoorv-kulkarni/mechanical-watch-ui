@@ -338,6 +338,104 @@ body.night-mode .toggle-switch.active .toggle-slider {
     box-shadow: 0 0 4px rgba(255,0,0,0.5);
 }
 
+.gmt-hand {
+    width: 3px;
+    height: 22%;
+    background: linear-gradient(to top, #ffb347, #e88a1a);
+    border-radius: 2px 2px 0 0;
+    z-index: 1;
+    box-shadow: 0 0 6px rgba(232, 138, 26, 0.4);
+    display: none;
+}
+
+.gmt-hand.active {
+    display: block;
+}
+
+.gmt-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.gmt-ring.active {
+    opacity: 1;
+}
+
+.gmt-tick {
+    position: absolute;
+    width: 1px;
+    height: 1.5%;
+    background: rgba(255, 179, 71, 0.35);
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+}
+
+.gmt-tick.major {
+    width: 2px;
+    height: 2.2%;
+    background: rgba(255, 179, 71, 0.6);
+}
+
+.gmt-numeral {
+    position: absolute;
+    font-size: clamp(8px, 1.5vw, 11px);
+    color: #ffb347;
+    opacity: 0.75;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    width: 20px;
+    text-align: center;
+    transform: translate(-50%, -50%);
+    font-variant-numeric: tabular-nums;
+}
+
+.gmt-label {
+    font-size: clamp(10px, 2vw, 14px);
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    color: #ffb347;
+    opacity: 0;
+    margin-top: 5px;
+    transition: opacity 0.3s;
+}
+
+.gmt-label.active {
+    opacity: 0.75;
+}
+
+.gmt-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gmt-select {
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-family: inherit;
+    letter-spacing: 0.05em;
+    max-width: 180px;
+    cursor: pointer;
+}
+
+body.night-mode .gmt-hand,
+body.night-mode .gmt-ring {
+    filter: hue-rotate(-30deg) saturate(0.6) brightness(0.5);
+}
+
+body.night-mode .gmt-label {
+    color: #662200;
+}
+
 .center-dot {
     position: absolute;
     width: 14px;

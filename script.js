@@ -287,7 +287,76 @@ const els = {
     nightModeToggle: document.getElementById('nightModeToggle'),
     beepMuteToggle: document.getElementById('beepMuteToggle'),
     syncButton: document.getElementById('syncButton'),
+    gmtSelect: document.getElementById('gmtSelect'),
+    gmtHand: document.getElementById('gmtHand'),
+    gmtLabel: document.getElementById('gmtLabel'),
+    gmtRing: document.getElementById('gmtRing'),
 };
+
+// Build a 24-hour ring inside the 12-hour numerals: tick every hour,
+// labelled numeral every 3 hours. 0 sits at 12 o'clock, 12 at 6 o'clock.
+function initializeGmtRing() {
+    for (let h = 0; h < 24; h++) {
+        const angle = h * 15; // 15° per hour on a 24h dial
+        const isMajor = h % 3 === 0;
+
+        const tick = document.createElement('div');
+        tick.classList.add('gmt-tick');
+        if (isMajor) tick.classList.add('major');
+        const tickR = 24;
+        const tr = (angle - 90) * (Math.PI / 180);
+        tick.style.left = `calc(50% + ${tickR * Math.cos(tr)}%)`;
+        tick.style.top = `calc(50% + ${tickR * Math.sin(tr)}%)`;
+        tick.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        els.gmtRing.appendChild(tick);
+
+        if (isMajor) {
+            const numR = 19;
+            const num = document.createElement('div');
+            num.classList.add('gmt-numeral');
+            num.textContent = String(h).padStart(2, '0');
+            num.style.left = `calc(50% + ${numR * Math.cos(tr)}%)`;
+            num.style.top = `calc(50% + ${numR * Math.sin(tr)}%)`;
+            els.gmtRing.appendChild(num);
+        }
+    }
+}
+
+// ── GMT (second timezone) ──────────────────────────────────────────────────
+let gmtZone = '';
+
+function populateGmtZones() {
+    const zones = typeof Intl.supportedValuesOf === 'function'
+        ? Intl.supportedValuesOf('timeZone')
+        : [];
+    for (const zone of zones) {
+        const opt = document.createElement('option');
+        opt.value = zone;
+        opt.textContent = zone.replace(/_/g, ' ');
+        els.gmtSelect.appendChild(opt);
+    }
+}
+
+// Returns hours as a float (e.g. 14.5 for 14:30) in the given IANA zone
+function getZoneHours(zone, date) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: zone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(date);
+    const get = (t) => +parts.find(p => p.type === t).value;
+    return get('hour') + get('minute') / 60 + get('second') / 3600;
+}
+
+function applyGmtZone(zone) {
+    gmtZone = zone || '';
+    const active = !!gmtZone;
+    els.gmtHand.classList.toggle('active', active);
+    els.gmtLabel.classList.toggle('active', active);
+    els.gmtRing.classList.toggle('active', active);
+}
 
 // Restore persisted UI state before wiring toggles
 function applyStoredState() {
@@ -303,6 +372,11 @@ function applyStoredState() {
         els.viewToggle.classList.add('active');
         els.digitalView.classList.add('active');
         els.analogView.classList.remove('active');
+    }
+    const storedZone = localStorage.getItem('gmtZone') || '';
+    if (storedZone) {
+        els.gmtSelect.value = storedZone;
+        applyGmtZone(storedZone);
     }
 }
 
@@ -330,6 +404,13 @@ els.beepMuteToggle.addEventListener('click', () => {
 
 // Sync button
 els.syncButton.addEventListener('click', syncTime);
+
+// GMT zone picker
+els.gmtSelect.addEventListener('change', (e) => {
+    const zone = e.target.value;
+    applyGmtZone(zone);
+    localStorage.setItem('gmtZone', zone);
+});
 
 // Update clock
 function update() {
@@ -385,6 +466,16 @@ function update() {
     els.minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
     els.hourHand.style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
 
+    // GMT hand on 24-hour scale (15° per hour)
+    if (gmtZone) {
+        const gmtHours = getZoneHours(gmtZone, now);
+        els.gmtHand.style.transform = `translateX(-50%) rotate(${gmtHours * 15}deg)`;
+        const gH = Math.floor(gmtHours);
+        const gM = Math.floor((gmtHours - gH) * 60);
+        const label = gmtZone.split('/').pop().replace(/_/g, ' ');
+        els.gmtLabel.textContent = `${label} · ${String(gH).padStart(2, '0')}:${String(gM).padStart(2, '0')}`;
+    }
+
     // Update progress bar
     const progress = ((now.getSeconds() + ms / 1000) / 60) * 100;
     els.progress.style.width = progress + "%";
@@ -396,6 +487,8 @@ function update() {
 }
 
 // Initialize
+populateGmtZones();
 applyStoredState();
 initializeAnalogWatch();
+initializeGmtRing();
 requestAnimationFrame(update);

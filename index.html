@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mechanical Watch UI</title>
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -31,6 +31,13 @@
             </div>
         </div>
 
+        <div class="gmt-container">
+            <span class="toggle-label">GMT Zone</span>
+            <select class="gmt-select" id="gmtSelect">
+                <option value="">None</option>
+            </select>
+        </div>
+
         <div class="sync-container">
             <button class="sync-button" id="syncButton">Sync Time</button>
             <span class="sync-status" id="syncStatus"></span>
@@ -51,6 +58,8 @@
         <div class="watch">
             <div class="indices" id="indices"></div>
             <div class="numerals" id="numerals"></div>
+            <div class="gmt-ring" id="gmtRing"></div>
+            <div class="hand gmt-hand" id="gmtHand"></div>
             <div class="hand hour-hand" id="hourHand"></div>
             <div class="hand minute-hand" id="minuteHand"></div>
             <div class="hand second-hand" id="secondHand"></div>
@@ -60,6 +69,7 @@
             <div class="analog-digital-time" id="analogTime">00:00:00</div>
             <div class="analog-date-detail" id="analogDate">Monday, 01 Jan 2024</div>
             <div class="analog-timezone" id="analogTimezone">UTC+0</div>
+            <div class="gmt-label" id="gmtLabel"></div>
         </div>
     </div>
 
@@ -84,6 +94,6 @@
         <div class="progress-bar" id="progress"></div>
     </div>
 
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=8"></script>
 </body>
 </html>
