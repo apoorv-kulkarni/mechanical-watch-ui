@@ -302,7 +302,7 @@ body.night-mode .toggle-switch.active .toggle-slider {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 1;
 }
 
 .hand {
