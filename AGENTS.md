@@ -21,6 +21,13 @@ A single-page web app for setting mechanical wristwatches accurately. Pure vanil
 - UI state (night mode, mute, view, GMT zone) persists in `localStorage` and is restored by `applyStoredState` before listeners are wired.
 - Asset cache busting is done via `?v=N` query strings on `styles.css` and `script.js` in `index.html` — bump on shipping changes that mobile clients need to pick up.
 
+## Layout
+
+- `body` uses `height: 100svh` (small viewport height) so the layout fits within the visible area on mobile Chrome, which excludes the address bar. Do not change this to `100vh`.
+- `padding-bottom` on `body` reserves space for both the fixed GMT container and the fixed complications bar stacked above the progress bar. Adjust it if either element's height or `bottom` offset changes.
+- The controls bar is `position: fixed; top: 0`. On mobile (`max-width: 560px`) it becomes a 2-row flex strip: row 1 (Analog/Digital + Night Mode) and row 2 (Mute Beep + Sync Time), separated by a zero-height `.flex-break` div. `padding-top` on `body` must match the controls bar height — currently `90px`.
+- The GMT Zone selector is a standalone `position: fixed` pill element (`bottom: 100px`) that sits above the complications bar, not inside the controls bar.
+
 ## Conventions
 
 - Vanilla JS only. Don't introduce a bundler, framework, or npm dependencies.
@@ -30,4 +37,4 @@ A single-page web app for setting mechanical wristwatches accurately. Pure vanil
 
 ## Testing
 
-No automated tests. Verify changes by opening `index.html` in a browser and exercising the controls. For mobile, bump the `?v=N` cache-bust in [index.html](index.html).
+No automated tests. Verify changes by opening `index.html` in a browser and exercising the controls. For mobile, use Chrome DevTools device emulation (iPhone SE at 375px is a good baseline) and bump the `?v=N` cache-bust in [index.html](index.html).
