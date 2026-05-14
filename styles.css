@@ -2,9 +2,10 @@ body {
     background-color: #000;
     color: #fff;
     margin: 0;
-    height: 100vh;
+    min-height: 100svh;
+    height: 100svh;
     box-sizing: border-box;
-    padding-bottom: 80px; /* reserve space for the fixed complications bar */
+    padding-bottom: 155px; /* reserve space for gmt bar + complications bar */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -93,32 +94,56 @@ body.night-mode .toggle-switch.active .toggle-slider {
 
 @media (max-width: 560px) {
     body {
-        padding-top: 70px;
+        padding-top: 90px;
     }
 
     .controls-bar {
         flex-direction: row;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: space-between;
         right: 0;
         left: 0;
-        padding: 10px 14px 8px;
-        gap: 8px 16px;
+        padding: 8px 14px;
+        gap: 6px 10px;
         background: rgba(0, 0, 0, 0.55);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
 
+    /* Row 1: Analog/Digital + Night Mode */
+    .toggle-container,
+    .night-mode-container {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    /* Force row break — Mute + Sync go on row 2 */
+    .flex-break {
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    /* Row 2: Mute Beep + Sync Time */
+    .beep-mute-container {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
     .sync-container {
         flex-direction: row;
         align-items: center;
         gap: 8px;
+        flex-shrink: 0;
     }
 
     .sync-status {
         font-size: 9px;
+    }
+
+    .gmt-select {
+        max-width: 160px;
     }
 }
 
@@ -409,9 +434,21 @@ body.night-mode .toggle-switch.active .toggle-slider {
 }
 
 .gmt-container {
+    position: fixed;
+    bottom: 100px; /* sits above the complications bar with comfortable gap */
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 16px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 50;
+    white-space: nowrap;
 }
 
 .gmt-select {
@@ -434,6 +471,11 @@ body.night-mode .gmt-ring {
 
 body.night-mode .gmt-label {
     color: #662200;
+}
+
+body.night-mode .gmt-container {
+    background: rgba(255, 0, 0, 0.03);
+    border-color: rgba(255, 0, 0, 0.08);
 }
 
 .center-dot {
