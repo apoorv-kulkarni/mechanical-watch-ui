@@ -145,6 +145,14 @@ body.night-mode .toggle-switch.active .toggle-slider {
     .gmt-select {
         max-width: 160px;
     }
+
+    .complication-item {
+        padding: 0 12px;
+    }
+
+    .sun-row {
+        font-size: 11px;
+    }
 }
 
 .sync-button {
@@ -578,6 +586,36 @@ body.night-mode .gmt-container {
     color: #f0d060;
 }
 
+.sun-times {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sun-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+.sun-icon {
+    font-size: 10px;
+    opacity: 0.6;
+}
+
+.sun-icon.rise {
+    color: #f0d060;
+}
+
+.sun-icon.set {
+    color: #ffb347;
+}
+
 body.night-mode .complications-bar {
     background: rgba(255, 0, 0, 0.03);
     border-color: rgba(255, 0, 0, 0.08);
@@ -585,8 +623,14 @@ body.night-mode .complications-bar {
 
 body.night-mode .complication-value,
 body.night-mode .moon-display svg circle,
-body.night-mode .leap-cycle-display {
+body.night-mode .leap-cycle-display,
+body.night-mode .sun-times {
     opacity: 0.4;
+}
+
+body.night-mode .sun-icon.rise,
+body.night-mode .sun-icon.set {
+    color: #ff3300;
 }
 
 /* Progress bar */

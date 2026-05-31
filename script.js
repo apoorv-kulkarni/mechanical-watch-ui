@@ -153,6 +153,105 @@ function leapCycleSVG(position) {
     return `<svg width="74" height="28" viewBox="0 0 74 28">${line}${marks}</svg>`;
 }
 
+// ── Sunrise / Sunset ─────────────────────────────────────────────────────────
+// NOAA simplified solar calculator. lat/lon in decimal degrees (east positive).
+function calcSunTimes(lat, lon, date) {
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+
+    const JD = date.getTime() / 86400000 + 2440587.5;
+    const T = (JD - 2451545.0) / 36525;
+
+    const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360;
+    const M = 357.52911 + T * (35999.05029 - T * 0.0001537);
+    const Mrad = toRad(M);
+
+    const C = (1.914602 - T * (0.004817 + 0.000014 * T)) * Math.sin(Mrad)
+        + (0.019993 - 0.000101 * T) * Math.sin(2 * Mrad)
+        + 0.000289 * Math.sin(3 * Mrad);
+
+    const sunLon = L0 + C;
+    const omega = 125.04 - 1934.136 * T;
+    const lambda = sunLon - 0.00569 - 0.00478 * Math.sin(toRad(omega));
+
+    const epsilon0 = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60;
+    const epsilon = epsilon0 + 0.00256 * Math.cos(toRad(omega));
+
+    const sinDec = Math.sin(toRad(epsilon)) * Math.sin(toRad(lambda));
+    const dec = Math.asin(sinDec);
+
+    const y = Math.tan(toRad(epsilon / 2)) ** 2;
+    const L0rad = toRad(L0);
+    const e = 0.016708634;
+    const EqT = 4 * toDeg(
+        y * Math.sin(2 * L0rad)
+        - 2 * e * Math.sin(Mrad)
+        + 4 * e * y * Math.sin(Mrad) * Math.cos(2 * L0rad)
+        - 0.5 * y * y * Math.sin(4 * L0rad)
+        - 1.25 * e * e * Math.sin(2 * Mrad)
+    );
+
+    const cosHA = (Math.cos(toRad(90.833)) - Math.sin(toRad(lat)) * sinDec)
+        / (Math.cos(toRad(lat)) * Math.cos(dec));
+
+    if (cosHA > 1) return { polar: 'night' };
+    if (cosHA < -1) return { polar: 'day' };
+
+    const HA = toDeg(Math.acos(cosHA));
+    const solarNoonUTC = 720 - 4 * lon - EqT;
+    const midnight = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+
+    return {
+        sunrise: new Date(midnight.getTime() + (solarNoonUTC - 4 * HA) * 60000),
+        sunset:  new Date(midnight.getTime() + (solarNoonUTC + 4 * HA) * 60000),
+    };
+}
+
+let sunCoords = null; // { lat, lon } set once geolocation resolves
+
+function initSunTimes() {
+    const cached = localStorage.getItem('sunCoords');
+    if (cached) {
+        sunCoords = JSON.parse(cached);
+    }
+
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+            sunCoords = { lat: coords.latitude, lon: coords.longitude };
+            localStorage.setItem('sunCoords', JSON.stringify(sunCoords));
+            lastComplicationDay = null; // force redraw with fresh coords
+        },
+        () => { /* permission denied — use cached coords if available */ },
+        { timeout: 8000 }
+    );
+}
+
+function formatSunTime(date) {
+    return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+}
+
+function updateSunDisplay(date) {
+    if (!sunCoords) {
+        els.sunriseTime.textContent = '--:--';
+        els.sunsetTime.textContent = '--:--';
+        return;
+    }
+
+    const times = calcSunTimes(sunCoords.lat, sunCoords.lon, date);
+    if (times.polar === 'night') {
+        els.sunriseTime.textContent = 'Polar';
+        els.sunsetTime.textContent = 'Night';
+    } else if (times.polar === 'day') {
+        els.sunriseTime.textContent = 'Polar';
+        els.sunsetTime.textContent = 'Day';
+    } else {
+        els.sunriseTime.textContent = formatSunTime(times.sunrise);
+        els.sunsetTime.textContent = formatSunTime(times.sunset);
+    }
+}
+
 // Cache to avoid repainting complications every animation frame
 let lastComplicationDay = null;
 
@@ -175,6 +274,9 @@ function updateComplications(date) {
 
     // Cycle scale
     els.leapCycleDisplay.innerHTML = leapCycleSVG(leapCyclePosition(year));
+
+    // Sunrise / sunset
+    updateSunDisplay(date);
 }
 
 // Track last second to detect when it resets
@@ -291,6 +393,8 @@ const els = {
     gmtHand: document.getElementById('gmtHand'),
     gmtLabel: document.getElementById('gmtLabel'),
     gmtRing: document.getElementById('gmtRing'),
+    sunriseTime: document.getElementById('sunriseTime'),
+    sunsetTime: document.getElementById('sunsetTime'),
 };
 
 // Build a 24-hour ring inside the 12-hour numerals: tick every hour,
@@ -491,4 +595,5 @@ populateGmtZones();
 applyStoredState();
 initializeAnalogWatch();
 initializeGmtRing();
+initSunTimes();
 requestAnimationFrame(update);
