@@ -14,9 +14,10 @@ A single-page web app for setting mechanical wristwatches accurately. Pure vanil
 
 ## Architecture notes
 
-- The update loop runs on `requestAnimationFrame` ([script.js:416](script.js#L416)). DOM lookups are cached once into the `els` object ([script.js:265](script.js#L265)) so the per-frame path stays cheap.
-- Time can drift from device clock; "Sync Time" hits Cloudflare's `/cdn-cgi/trace` (text format) with TimeAPI as fallback, then stores `timeOffset` ([script.js:187](script.js#L187)).
-- Complications (moon phase, leap year cycle) are throttled to once per day via `lastComplicationDay` ([script.js:159](script.js#L159)).
+- The update loop runs on `requestAnimationFrame` ([script.js:599](script.js#L599)). DOM lookups are cached once into the `els` object ([script.js:367](script.js#L367)) so the per-frame path stays cheap.
+- Time can drift from device clock; "Sync Time" hits Cloudflare's `/cdn-cgi/trace` (text format) with TimeAPI as fallback, then stores `timeOffset` ([script.js:289](script.js#L289)).
+- Complications (moon phase, leap year cycle, sunrise/sunset) are throttled to once per day via `lastComplicationDay` ([script.js:256](script.js#L256)).
+- Sunrise/sunset uses the NOAA solar calculator (`calcSunTimes`). Geolocation is requested once on load and cached in `localStorage` under `sunCoords`. If permission is denied and no cache exists, the complication shows `--:--`.
 - Analog ring geometry: 60 markers at 6° each, numerals 12/1…11 at radius 33%, GMT 24h ring inside the numerals at radius 19–24%.
 - UI state (night mode, mute, view, GMT zone) persists in `localStorage` and is restored by `applyStoredState` before listeners are wired.
 - Asset cache busting is done via `?v=N` query strings on `styles.css` and `script.js` in `index.html` — bump on shipping changes that mobile clients need to pick up.

@@ -10,6 +10,7 @@ A single-page web app for setting mechanical wristwatches accurately. Pure vanil
 - **Night mode** for low-light setting
 - **GMT complication** — pick any IANA timezone and a 24-hour ring + GMT hand show that zone's time alongside local
 - **Moon phase** complication, computed from a known new moon epoch
+- **Sunrise/sunset** complication using the NOAA solar calculator and the browser Geolocation API; coordinates cached in `localStorage`
 - **Leap year indicator** showing the current year's position in the 4-year cycle
 - **Centiseconds** readout in the digital view
 - UI state (view, night mode, mute, GMT zone) persists across reloads
