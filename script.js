@@ -520,29 +520,27 @@ els.gmtSelect.addEventListener('change', (e) => {
 function update() {
     const now = new Date(Date.now() + timeOffset);
     
-    const h = String(now.getHours()).padStart(2, '0');
     const m = String(now.getMinutes()).padStart(2, '0');
     const s = String(now.getSeconds()).padStart(2, '0');
     const ms = now.getMilliseconds();
+    const displayHours = now.getHours() % 12 || 12;
+    const period = now.getHours() >= 12 ? 'PM' : 'AM';
 
-    // Beep when second resets to 0
+    // Beep once per second (skip the first frame so load doesn't chirp)
     const currentSecond = now.getSeconds();
-    if (lastSecond === 59 && currentSecond === 0) {
+    if (lastSecond !== -1 && currentSecond !== lastSecond) {
         beep();
     }
     lastSecond = currentSecond;
 
-    const period = now.getHours() >= 12 ? 'PM' : 'AM';
-
-    // Update digital clock
-    els.clock.textContent = h + ":" + m;
+    // Update digital clock (12-hour + AM/PM)
+    els.clock.textContent = String(displayHours).padStart(2, '0') + ':' + m;
     els.secs.textContent = s;
     const cs = String(Math.floor(ms / 10)).padStart(2, '0');
-    els.centis.textContent = "." + cs;
+    els.centis.textContent = '.' + cs;
     els.ampm.textContent = period;
 
     // Update analog info display
-    const displayHours = now.getHours() % 12 || 12; // Convert to 12-hour format
     els.analogTime.textContent = `${displayHours}:${m}:${s}.${cs} ${period}`;
     const dateStr = now.toLocaleDateString('en-US', {
         weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
