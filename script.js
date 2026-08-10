@@ -50,7 +50,7 @@ try {
 }
 let beepMuted = false;
 
-function beep() {
+function beep({ frequency = 800, duration = 0.1, volume = 0.3 } = {}) {
     if (beepMuted || !audioContext) return;
 
     const play = () => {
@@ -60,14 +60,15 @@ function beep() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        oscillator.frequency.value = 800; // 800 Hz beep
+        oscillator.frequency.value = frequency;
         oscillator.type = 'sine';
 
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        const t = audioContext.currentTime;
+        gainNode.gain.setValueAtTime(volume, t);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + duration);
 
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
+        oscillator.start(t);
+        oscillator.stop(t + duration);
     };
 
     // Browsers suspend AudioContext until a user gesture occurs
@@ -526,10 +527,14 @@ function update() {
     const displayHours = now.getHours() % 12 || 12;
     const period = now.getHours() >= 12 ? 'PM' : 'AM';
 
-    // Beep once per second (skip the first frame so load doesn't chirp)
+    // Beep on second change: ticks for :50–:59, distinct tone when the hand hits 12
     const currentSecond = now.getSeconds();
     if (lastSecond !== -1 && currentSecond !== lastSecond) {
-        beep();
+        if (currentSecond === 0) {
+            beep({ frequency: 1200, duration: 0.22, volume: 0.35 });
+        } else if (currentSecond >= 50) {
+            beep();
+        }
     }
     lastSecond = currentSecond;
 

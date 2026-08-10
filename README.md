@@ -6,7 +6,7 @@ A single-page web app for setting mechanical wristwatches accurately. Pure vanil
 
 - **Analog and digital views** with a toggle to switch between them
 - **Network time sync** against Cloudflare (with TimeAPI as fallback) so the displayed time is closer to true than the device clock
-- **Per-second beep** to help you set the seconds hand precisely (mutable)
+- **Countdown beeps** on the last 10 seconds of each minute, plus a distinct tone when the seconds hand hits 12 (mutable)
 - **Night mode** for low-light setting
 - **GMT complication** — pick any IANA timezone and a 24-hour ring + GMT hand show that zone's time alongside local
 - **Moon phase** complication, computed from a known new moon epoch
