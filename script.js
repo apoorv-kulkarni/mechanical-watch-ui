@@ -49,6 +49,12 @@ try {
     console.warn('Web Audio API not supported:', e);
 }
 let beepMuted = false;
+let repeaterPlaying = false;
+let repeaterClearTimer = null;
+
+// Original cathedral-gong inspired pitches (not a brand clone)
+const GONG_LOW = 246.94;  // B3
+const GONG_HIGH = 311.13; // Eb4, minor third above
 
 function beep({ frequency = 800, duration = 0.1, volume = 0.3 } = {}) {
     if (beepMuted || !audioContext) return;
@@ -77,6 +83,130 @@ function beep({ frequency = 800, duration = 0.1, volume = 0.3 } = {}) {
     } else {
         play();
     }
+}
+
+function ensureAudioReady() {
+    if (!audioContext) return Promise.reject(new Error('no audio'));
+    if (audioContext.state === 'suspended') return audioContext.resume();
+    return Promise.resolve();
+}
+
+// Soft hammer + additive slightly-inharmonic partials with a long cathedral decay
+function strikeGong(fundamental, when) {
+    if (!audioContext) return;
+
+    // Decay short enough that successive strikes stay countable, long enough to bloom
+    const duration = 1.25;
+    const master = audioContext.createGain();
+    master.connect(audioContext.destination);
+    master.gain.setValueAtTime(0.0001, when);
+    master.gain.exponentialRampToValueAtTime(0.26, when + 0.02);
+    master.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+
+    const partials = [
+        [1.0, 0.48],
+        [2.004, 0.26],
+        [2.76, 0.16],
+        [4.05, 0.09],
+        [5.43, 0.05],
+    ];
+    for (const [ratio, amp] of partials) {
+        const osc = audioContext.createOscillator();
+        const g = audioContext.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = fundamental * ratio;
+        g.gain.value = amp;
+        osc.connect(g);
+        g.connect(master);
+        osc.start(when);
+        osc.stop(when + duration);
+    }
+
+    // Brief metallic hammer transient
+    const n = Math.floor(audioContext.sampleRate * 0.025);
+    const buf = audioContext.createBuffer(1, n, audioContext.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (n * 0.18));
+    }
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buf;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = fundamental * 2.2;
+    filter.Q.value = 1.4;
+    const noiseGain = audioContext.createGain();
+    noiseGain.gain.setValueAtTime(0.09, when);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, when + 0.05);
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start(when);
+    noise.stop(when + 0.055);
+}
+
+// Classic minute repeater: hours (low) → quarters (high-low) → minutes (high)
+function playMinuteRepeater(date) {
+    if (!audioContext || repeaterPlaying) return;
+
+    const hours = date.getHours() % 12 || 12;
+    const minutes = date.getMinutes();
+    const quarters = Math.floor(minutes / 15);
+    const mins = minutes % 15;
+
+    // Tuned so 11:59 (~31 strikes) lands around 16–18s and stays countable
+    const STRIKE = 0.60;
+    const PAIR_GAP = 0.22;
+    const PAIR_STRIDE = 0.82;
+    const SECTION = 1.05;
+    const DECAY = 1.35;
+
+    repeaterPlaying = true;
+    if (els.repeatButton) els.repeatButton.disabled = true;
+
+    ensureAudioReady().then(() => {
+        let t = audioContext.currentTime + 0.05;
+        const hasQuarters = quarters > 0;
+        const hasMins = mins > 0;
+
+        for (let i = 0; i < hours; i++) {
+            strikeGong(GONG_LOW, t);
+            if (i < hours - 1) {
+                t += STRIKE;
+            } else if (hasQuarters || hasMins) {
+                t += SECTION;
+            } else {
+                t += DECAY;
+            }
+        }
+
+        for (let q = 0; q < quarters; q++) {
+            strikeGong(GONG_HIGH, t);
+            strikeGong(GONG_LOW, t + PAIR_GAP);
+            if (q < quarters - 1) {
+                t += PAIR_STRIDE;
+            } else if (hasMins) {
+                t += SECTION;
+            } else {
+                t += DECAY;
+            }
+        }
+
+        for (let m = 0; m < mins; m++) {
+            strikeGong(GONG_HIGH, t);
+            t += (m < mins - 1) ? STRIKE : DECAY;
+        }
+
+        const msUntilClear = Math.max(0, (t - audioContext.currentTime) * 1000) + 50;
+        clearTimeout(repeaterClearTimer);
+        repeaterClearTimer = setTimeout(() => {
+            repeaterPlaying = false;
+            if (els.repeatButton) els.repeatButton.disabled = false;
+        }, msUntilClear);
+    }).catch(() => {
+        repeaterPlaying = false;
+        if (els.repeatButton) els.repeatButton.disabled = false;
+    });
 }
 
 // ── Moon Phase ──────────────────────────────────────────────────────────────
@@ -390,6 +520,7 @@ const els = {
     nightModeToggle: document.getElementById('nightModeToggle'),
     beepMuteToggle: document.getElementById('beepMuteToggle'),
     syncButton: document.getElementById('syncButton'),
+    repeatButton: document.getElementById('repeatButton'),
     gmtSelect: document.getElementById('gmtSelect'),
     gmtHand: document.getElementById('gmtHand'),
     gmtLabel: document.getElementById('gmtLabel'),
@@ -510,6 +641,11 @@ els.beepMuteToggle.addEventListener('click', () => {
 // Sync button
 els.syncButton.addEventListener('click', syncTime);
 
+// Minute repeater: chimes current synced time once
+els.repeatButton.addEventListener('click', () => {
+    playMinuteRepeater(new Date(Date.now() + timeOffset));
+});
+
 // GMT zone picker
 els.gmtSelect.addEventListener('change', (e) => {
     const zone = e.target.value;
@@ -527,9 +663,10 @@ function update() {
     const displayHours = now.getHours() % 12 || 12;
     const period = now.getHours() >= 12 ? 'PM' : 'AM';
 
-    // Beep on second change: ticks for :50–:59, distinct tone when the hand hits 12
+    // Beep on second change: ticks for :50–:59, distinct tone when the hand hits 12.
+    // Suppressed while the minute repeater is chiming.
     const currentSecond = now.getSeconds();
-    if (lastSecond !== -1 && currentSecond !== lastSecond) {
+    if (!repeaterPlaying && lastSecond !== -1 && currentSecond !== lastSecond) {
         if (currentSecond === 0) {
             beep({ frequency: 1200, duration: 0.22, volume: 0.35 });
         } else if (currentSecond >= 50) {

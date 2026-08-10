@@ -125,7 +125,7 @@ body.night-mode .toggle-switch.active .toggle-slider {
         height: 0;
     }
 
-    /* Row 2: Mute Beep + Sync Time */
+    /* Row 2: Mute Beep + Repeat + Sync Time */
     .beep-mute-container {
         flex: 1 1 auto;
         justify-content: center;
@@ -133,7 +133,9 @@ body.night-mode .toggle-switch.active .toggle-slider {
 
     .sync-container {
         flex-direction: row;
+        flex-wrap: wrap;
         align-items: center;
+        justify-content: flex-end;
         gap: 8px;
         flex-shrink: 0;
     }
@@ -174,6 +176,15 @@ body.night-mode .toggle-switch.active .toggle-slider {
 
 .sync-button:active {
     background-color: #222;
+}
+
+.sync-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.sync-button:disabled:hover {
+    background-color: #333;
 }
 
 .sync-status {
